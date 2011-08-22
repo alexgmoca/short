@@ -7,10 +7,10 @@ $pass = "c4Blevisi0n";
 $db   = "db76035_short";
 */
 
-$host = "prueba.kamikazelab.com";
-$user = "pruebas_user";
-$pass = "kamikaze";
-$db   = "short_db";
+$host = "127.0.0.1";
+$user = "root";
+$pass = "root";
+$db   = "short";
 
 $link = mysql_connect($host, $user, $pass);
 $db_selected = mysql_select_db($db, $link);
@@ -22,6 +22,11 @@ if(!$db_selected) {
  * DEFINITIONS
  */
 
-DEFINE("MAIN_URL","http://pruebas.kamikazelab.com/short/index.php?key=%s");
+DEFINE("MAIN_URL","http://127.0.0.1/short/index.php?key=%s");
+/*
+* posibly in the future, during an instalation step, this seed shall be
+* randomized to avoid consecuent id's
+*/
+DEFINE("SEED","abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 
 ?>

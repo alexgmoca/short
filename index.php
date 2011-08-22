@@ -124,7 +124,8 @@ function search_custom (hint) {
 }
 
 function timer_on(hints) {
-	
+		
+		document.getElementById("used").innerHTML="<img src='loading.gif'/>";
 		if(timer!=1) {
 			var t= setTimeout(function(){search_custom(document.getElementById("f_custom").value)},3000);
 			timer = 1;
@@ -186,19 +187,23 @@ function displayDatePicker(dateFieldName, displayBelowThisObject, dtFormat, dtSe
  
   // if we weren't told what node to display the datepicker beneath, just display it
   // beneath the date field we're updating
-  if (!displayBelowThisObject)
+  if (!displayBelowThisObject) {
    	displayBelowThisObject = targetDateField;
+  }
   // if a date separator character was given, update the dateSeparator variable
-  if (dtSep)
+  if (dtSep) {
     dateSeparator = dtSep;
-  else
+    }
+  else {
     dateSeparator = defaultDateSeparator;
- 
+    }
   // if a date format was given, update the dateFormat variable
-  if (dtFormat)
+  if (dtFormat) {
     dateFormat = dtFormat;
-  else
+	}
+  else {
     dateFormat = defaultDateFormat;
+    }
  
   var x = displayBelowThisObject.offsetLeft+130;
   var y = displayBelowThisObject.offsetTop + displayBelowThisObject.offsetHeight;

@@ -34,11 +34,8 @@ function to_base($number, $base = 10) {
 }
 
 function id_to_key($id) {
-	/*
-	 * posibly in the future, during an instalation step, this seed shall be
-	 * randomized to avoid consecuent id's
-	 */
-	$seed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	
+	$seed = SEED;
 	$code = to_base($id, strlen($seed));
 	$ret  = "";
 	foreach($code as $c) {
@@ -111,7 +108,7 @@ function store_url($str, $post_data, $meta_data = array()) {
 	//get a new string id for the new row
 	$new_id = mysql_insert_id();
 	$str_id = id_to_key($new_id);
-	if($custom !=""){
+	if($custom !="") {
 		$str_id = $custom;
 	}
 	$sql = "UPDATE instance SET strkey = '$str_id' WHERE instance_id = $new_id";
@@ -409,34 +406,40 @@ function turn_off_notif($inst_id){
 function is_private ($key) {
 	$sql = "SELECT private_stats FROM instance WHERE strkey = '$key'";
 	$res = mysql_query($sql);
-	if(mysql_result($res,0)==1)
+	if(mysql_result($res,0)==1) {
 		return true;
-	else
-		return false;	
+	}
+	else {
+		return false;
+	}
 }
 
 function is_available ($custom_url) {
 	//sanitize
 	$custom_url = sql_clean($custom_url);
+	if(preg_match("/[^".SEED."]+/",$custom_url)) {
+		echo "<script type='text/javascript'>alert('Invalid characters in custom URL')</script>";
+		return false;
+	}
 	$sql = sprintf("SELECT instance_id FROM instance WHERE strkey = '%s'",$custom_url);
 	$res = mysql_query($sql);
 	if(mysql_result($res,0)!=0) {
 		echo "<script type='text/javascript'>alert('That URL already exists.')</script>";
 		return false;
 	}	
-	else 
+	else {
 		return true;
-
+	}
 }
 function date_validation ($date, $hour) {
 	$today = getdate();
 	list($y,$m,$d) = explode('/',$date);
-	if($date == "") 
+	if($date == "") {
 		$expiration = NULL;
-
-	elseif(substr_count($date,'/') == 2 && checkdate($m,$d,$y) && $y>=$today['year']) 
+	}
+	elseif(substr_count($date,'/') == 2 && checkdate($m,$d,$y) && $y>=$today['year']) {
      	 $expiration = $date.' '.$hour;
-            			
+    }       			
     else {
     	echo "<script type='text/javascript'>alert('Invalid Date!')</script>";
     	return 'error';
