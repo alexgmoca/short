@@ -23,6 +23,7 @@ if(!$db_selected) {
  */
 
 DEFINE("MAIN_URL","http://127.0.0.1/short/index.php?key=%s");
+DEFINE("URL","http:127.0.0.1/");
 /*
 * posibly in the future, during an instalation step, this seed shall be
 * randomized to avoid consecuent id's

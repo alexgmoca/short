@@ -1,7 +1,11 @@
 <?php
-
+session_start();
 include_once("base.php");
 include_once("utils.php");
+
+if(isset($_GET["val"])) {
+	activate_email($_GET["val"]);
+}
 
 if(isset($_GET["key"])) {
 	$meta = gather_meta();
@@ -57,42 +61,48 @@ if(isset($_GET["key"])) {
 	echo "something went wrong, message: ".$url["cause"];
 }
 
-if(isset($_GET["val"])) {
-	activate_email($_GET["val"]);
-}
-
 if(isset($_GET["off"])) {
 	turn_off_notif($_GET["off"]);
 }
 
+if(!isset($_SESSION["user_name"])){
+	echo "<script>location.href='login.php'</script>";
+	//header("Location: login.php");
+}
+
+if($_GET["p"]=="logout") {
+	session_destroy();
+	echo "<script>location.href='login.php'</script>";
+	//header("location:login.php");
+}
+
 if(isset($_POST["url"])) {
 	//store url
-	$stats = 0;
-	if(isset($_POST["stats"])) {
-		$stats =1;
+	$notif = 0;
+	if(isset($_POST["email"])) {
+		$notif =1;
 	}
 	$post_data = array(
 		"max_hits" => $_POST["max_hits"],
 		"notes"    => $_POST["notes"],
-		"email"    => $_POST["email"],
+		"notifications"    => $notif,
 		"custom"   => $_POST["custom"],
 		"exp_date" => $_POST["AnotherDate"],
-		"exp_hour" => $_POST["hour"],
-		"stats"    => $stats
+		"exp_hour" => $_POST["hour"]
 	);
 	
 	$url = is_url($_POST["url"]);
-
-		if((is_email($_POST["email"])) && $url!="" && is_available($_POST["custom"]) && date_validation($_POST['AnotherDate'],$_POST['hour']) != 'error') {
+	
+ 		
+		if($url!="" && is_available($_POST["custom"]) && date_validation($_POST['AnotherDate'],$_POST['hour']) != 'error') {
 			$strkey = store_url($url, $post_data, gather_meta());
 			$uurl = complete_url($strkey);
 			$surl = complete_url($strkey."!");
 			$msg  = "Ok, now your url ( $url ) has a new code: <a href='$uurl'>$strkey</a>, ";
 			$msg .= "<br><br>\n$uurl ";
-			//$msg .= "<a href='#' onClick='copyToClipboard(\"".$uurl."\")'>Copy to Clipboard</a><br>\n";
-			$msg .= "<br><br>The stats url is $surl<br>";
-	//		$msg .= "Remember that attaching a '.' at the end of any URL you have the preview of the URL you're about to be redirected.";
-			$msg .= "</div>";
+			$msg .= "</div><input type='button' id='d_clip_button' value='Copy To Clipboard'>";
+        	$msg .= "<script language='JavaScript'> var clip = new ZeroClipboard.Client(); clip.setText( '".$uurl."' ); clip.glue( 'd_clip_button' );</script>";
+			
 		}
 	
 }
@@ -103,6 +113,7 @@ if(isset($_POST["url"])) {
 <script type="text/javascript">
 var timer;
 
+
 function search_custom (hint) {
 	
   if (hint=="") {
@@ -110,7 +121,12 @@ function search_custom (hint) {
 	  timer = 0;
 	  return;
   } 
-  if (window.XMLHttpRequest) {
+  if (hint.indexOf("&")!=-1) {
+  	  document.getElementById("used").innerHTML="<font color='red'> &#10008; Invalid characters in custom URL</font>";
+	  timer = 0;
+	  return;
+  }
+  /*if (window.XMLHttpRequest) {
  	 xmlhttp=new XMLHttpRequest();
   }
   xmlhttp.onreadystatechange=function() {
@@ -119,13 +135,26 @@ function search_custom (hint) {
   	  }
   }
   xmlhttp.open("GET","search_url.php?h="+hint,true);
-  xmlhttp.send();
+  xmlhttp.send();*/
+  var xmlhttp = new XMLHttpRequest();
+  var url = "search_url.php";
+  var params = "h="+hint;
+  xmlhttp.open("POST", url, true);
+  xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xmlhttp.setRequestHeader("Content-length", params.length);
+  xmlhttp.setRequestHeader("Connection", "close");
+  xmlhttp.onreadystatechange = function() {
+	if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+		document.getElementById("used").innerHTML=xmlhttp.responseText;
+    }
+  } 
+  xmlhttp.send(params);
   timer = 0;
 }
 
 function timer_on(hints) {
 		
-		document.getElementById("used").innerHTML="<img src='loading.gif'/>";
+		document.getElementById("used").innerHTML="<img height=16 src='loading.gif'/>";
 		if(timer!=1) {
 			var t= setTimeout(function(){search_custom(document.getElementById("f_custom").value)},3000);
 			timer = 1;
@@ -577,7 +606,7 @@ function adjustiFrame(pickerDiv, iFrameDiv)
 }
 
 </script>
-
+<script type="text/javascript" src="ZeroClipboard.js"></script>
 <script>
 function validate(form) {
 	url = document.getElementById("f_url").value;
@@ -589,45 +618,6 @@ function validate(form) {
 	return false;
 }
 
-function copyToClipboard(s) {
-	 alert(1);
-}
-
-function j(s) {
-	 alert(s);
-    if ( window.clipboardData && clipboardData.setData )    {
-        clipboardData.setData("Text", s);
-    } else {
-        // You have to sign the code to enable this or allow the action in about:config by changing
-        user_pref("signed.applets.codebase_principal_support", true);
-        netscape.security.PrivilegeManager.enablePrivilege('UniversalXPConnect');
-
-        var clip Components.classes['@mozilla.org/widget/clipboard;[[[[1]]]]'].createInstance(Components.interfaces.nsIClipboard);
-        if (!clip) return;
-
-        // create a transferable
-        var trans = Components.classes['@mozilla.org/widget/transferable;[[[[1]]]]'].createInstance(Components.interfaces.nsITransferable);
-        if (!trans) return;
-
-        // specify the data we wish to handle. Plaintext in this case.
-        trans.addDataFlavor('text/unicode');
-
-        // To get the data from the transferable we need two new objects
-        var str = new Object();
-        var len = new Object();
-
-        var str = Components.classes["@mozilla.org/supports-string;[[[[1]]]]"].createInstance(Components.interfaces.nsISupportsString);
-        var copytext=meintext;
-        str.data=copytext;
-        trans.setTransferData("text/unicode",str,copytext.length*[[[[2]]]]);
-        var clipid=Components.interfaces.nsIClipboard;
-        if (!clip) {
-            prompt('nah, something went wrong, copy the following text:', s);
-            return false;
-        }
-        clip.setData(trans,null,clipid.kGlobalClipboard);       
-    }
-}
 </script>
 </head>
 
@@ -775,10 +765,11 @@ if($msg) {
     echo "<div id='result'>$msg</div>";
 }
 ?>
-
-<form onsubmit="return validate(this);" action="index.php" method="post">
-<div>url: <input type=text name=url id=f_url></div>
-<div>Custom URL: <input type=text name=custom id=f_custom onkeyup="timer_on(this.value)"/></div><b id="used"></b>
+<div align='right'><a href='historial.php'>Historial</a>&nbsp&nbsp&nbsp&nbsp<a href="index.php?p=logout">Logout!</a></div>
+<form onsubmit="return password();" action="index.php" method="post">
+<div>URL: <input type=text name=url id=f_url></div>
+<div>Custom URL:</div>  
+<div><font size=1>http://kmkz.mx/</font><input type=text name=custom id=f_custom onkeyup="timer_on(this.value)"><b id="used"></b></div>
 <div># hits allowed: <input type=text name=max_hits size=3><small>(0/blank for unlimited)</small></div>
 <div>Expiration Date: <input name="AnotherDate"/><a href="javascript:displayDatePicker('AnotherDate');"><img src='calendar_icon.jpg'/></a> Hour: 
 <select name=hour>
@@ -793,8 +784,12 @@ echo '<option>' . date('H:i ', $i);
 ?>
 </select></div>
 <div>notes?<br><textarea name=notes></textarea></div>
-<div>mail notifications: <input type=text name=email id=f_email></div>
-<div><input type=checkbox name=stats id=f_stats>private statistics </div>
+<div><input type=checkbox name=email id=f_email> mail notifications for this URL</div>
+<!--<div>mail notifications: <input type=text name=email id=f_email></div>-->
+<!--<div><input type=checkbox name=stats id=f_stats>private statistics </div>-->
 <input type=submit>
+<br>
+<br>
+
 </form>
 </html>
